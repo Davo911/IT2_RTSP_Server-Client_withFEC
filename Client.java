@@ -13,7 +13,12 @@ import javax.swing.*;
 import javax.swing.Timer;
 
 public class Client{
-
+	
+	String test = "#########TEST COMMIT!########";
+	
+	
+	
+	
   //GUI
   //----
   JFrame f = new JFrame("Client");
@@ -156,6 +161,7 @@ public class Client{
 	{
 	  //Init non-blocking RTPsocket that will be used to receive data
 	  try{
+
 	    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
 	    //RTPsocket = ...
 
@@ -395,6 +401,7 @@ public class Client{
       //if ....
       //otherwise, write the Session line from the RTSPid field
       //else ....
+
 
       RTSPBufferedWriter.flush();
     }
