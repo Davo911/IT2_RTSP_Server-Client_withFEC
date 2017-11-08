@@ -155,38 +155,39 @@ public class Client{
       System.out.println("Setup Button pressed !");      
 
       if (state == INIT) 
-	{
-	  //Init non-blocking RTPsocket that will be used to receive data
-	  try{
+      {
 
-	    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
-	    RTPsocket = new DatagramSocket(RTP_RCV_PORT);
-
-	    //set TimeOut value of the socket to 5msec.
-	    RTPsocket.setSoTimeout(5);
-
-	  }
-	  catch (SocketException se)
-	    {
-	      System.out.println("Socket exception: "+se);
-	      System.exit(0);
-	    }
-
-	  //init RTSP sequence number
-	  RTSPSeqNb = 1;
-	 
-	  //Send SETUP message to the server
-	  send_RTSP_request("SETUP");
-
-	  //Wait for the response 
-	  if (parse_server_response() != 200)
-	    System.out.println("Invalid Server Response");
-	  else 
-	    {
-	      //change RTSP state and print new state 
-	      state = READY;
-	      System.out.println("New RTSP state: READY\n");
-	    }
+		  //Init non-blocking RTPsocket that will be used to receive data
+		  try{
+	
+		    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
+		    RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+	
+		    //set TimeOut value of the socket to 5msec.
+		    RTPsocket.setSoTimeout(5);
+	
+		  }
+		  catch (SocketException se)
+		    {
+		      System.out.println("Socket exception: "+se);
+		      System.exit(0);
+		    }
+	
+		  //init RTSP sequence number
+		  RTSPSeqNb = 1;
+		 
+		  //Send SETUP message to the server
+		  send_RTSP_request("SETUP");
+	
+		  //Wait for the response 
+		  if (parse_server_response() != 200)
+		    System.out.println("Invalid Server Response");
+		  else 
+		    {
+		      //change RTSP state and print new state 
+		      state = READY;
+		      System.out.println("New RTSP state: READY\n");
+		    }
 	}//else if state != INIT then do nothing
     }
   }
@@ -389,15 +390,19 @@ public class Client{
       //Use the RTSPBufferedWriter to write to the RTSP socket
 
       //write the request line:
-      //RTSPBufferedWriter.write(request_type + " ");
+      RTSPBufferedWriter.write(request_type + " " + VideoFileName + " RTSP/1.0" + "\r\n");
 
       //write the CSeq line: 
-      //......
+      RTSPBufferedWriter.write("CSeq: " + RTSPSeqNb + "\r\n");
 
       //check if request_type is equal to "SETUP" and in this case write the Transport: line advertising to the server the port used to receive the RTP packets RTP_RCV_PORT
-      //if ....
+      if(request_type == "SETUP"){
+    	  RTSPBufferedWriter.write("Transport: RTP/UDP; client_port = "+ RTP_RCV_PORT + "\r\n");
+      }else{
+    	  RTSPBufferedWriter.write("Session: " + RTSPid + "\r\n");
+      } 
       //otherwise, write the Session line from the RTSPid field
-      //else ....
+
 
 
       RTSPBufferedWriter.flush();
