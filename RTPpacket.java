@@ -53,15 +53,18 @@ public class RTPpacket{
     //fill the header array of byte with RTP header fields
 
     header[0] = (byte)(Version << 6 | Padding << 5 | Extension << 4 | CC ) ;
-    header[1] = (byte)(Marker << 7 | PayloadType);
-    header[2] = (byte) SequenceNumber;
-    header[3] = (byte) SequenceNumber;
-    header[4] = (byte) 0;
+    header[1] = (byte)(Marker << 7 | PayloadType & 0x000000FF);
+    header[2] = (byte) (SequenceNumber >> 8);
+    header[3] = (byte) (SequenceNumber & 0xFF);
+    header[4] = (byte) (TimeStamp >> 24);
+    header[4] = (byte) (TimeStamp >> 16);
+    header[4] = (byte) (TimeStamp >> 8);
+    header[4] = (byte) (TimeStamp & 0xFF);
     header[8] = (byte)(Ssrc >> 24);
     header[9] = (byte)(Ssrc >> 16);
     header[10] = (byte)(Ssrc >> 8);
     header[11] = (byte)(Ssrc & 0xFF);
-    //??????????????????????????????????????????????
+
 
     //fill the payload bitstream:
     //--------------------------
