@@ -1,4 +1,3 @@
-
 /* ------------------
    Server
    usage: java Server [RTSP listening port]
@@ -226,7 +225,7 @@ public class Server extends JFrame implements ActionListener {
 	}
 	catch(Exception ex)
 	  {
-	    System.out.println("Exception caught: "+ex);
+	    System.out.println("||Handler for timer|| Exception caught: "+ex);
 	    System.exit(0);
 	  }
       }
@@ -291,12 +290,11 @@ public class Server extends JFrame implements ActionListener {
     }
     catch(Exception ex)
       {
-	System.out.println("Exception caught: "+ex);
+	System.out.println("||Parse RTSP Request||Exception caught: "+ex);
 	System.exit(0);
       }
     return(request_type);
   }
-
   //------------------------------------
   //Send RTSP Response
   //------------------------------------
@@ -311,8 +309,9 @@ public class Server extends JFrame implements ActionListener {
     }
     catch(Exception ex)
       {
-	System.out.println("Exception caught: "+ex);
+	System.out.println("||Send RTSP Response||Exception caught: "+ex);
 	System.exit(0);
       }
   }
 }
+

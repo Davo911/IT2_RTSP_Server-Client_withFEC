@@ -296,20 +296,20 @@ public class Client{
   
   class timerListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      
+
       //Construct a DatagramPacket to receive data from the UDP socket
       rcvdp = new DatagramPacket(buf, buf.length);
 
       try{
 	//receive the DP from the socket:
 	RTPsocket.receive(rcvdp);
-	  
+ 
 	//create an RTPpacket object from the DP
 	RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 
 	//print important header fields of the RTP packet received: 
 	System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-	
+
 	//print header bitstream:
 	rtp_packet.printheader();
 
@@ -321,7 +321,7 @@ public class Client{
 	//get an Image object from the payload bitstream
 	Toolkit toolkit = Toolkit.getDefaultToolkit();
 	Image image = toolkit.createImage(payload, 0, payload_length);
-	
+
 	//display the image as an ImageIcon object
 	icon = new ImageIcon(image);
 	iconLabel.setIcon(icon);
@@ -330,7 +330,7 @@ public class Client{
 	//System.out.println("Nothing to read");
       }
       catch (IOException ioe) {
-	System.out.println("Exception caught: "+ioe);
+	System.out.println("||Handler for timer||Exception caught: "+ioe);
       }
     }
   }
@@ -369,7 +369,7 @@ public class Client{
     }
     catch(Exception ex)
       {
-	System.out.println("Exception caught: "+ex);
+	System.out.println("||Parse Server Response||Exception caught: "+ex);
 	System.exit(0);
       }
     
@@ -397,7 +397,7 @@ public class Client{
 
       //check if request_type is equal to "SETUP" and in this case write the Transport: line advertising to the server the port used to receive the RTP packets RTP_RCV_PORT
       if(request_type == "SETUP"){
-    	  RTSPBufferedWriter.write("Transport: RTP/UDP; client_port = "+ RTP_RCV_PORT + "\r\n");
+    	  RTSPBufferedWriter.write("Transport: RTP/UDP); client_port= "+ RTP_RCV_PORT + "\r\n");
       }else{
     	  RTSPBufferedWriter.write("Session: " + RTSPid + "\r\n");
       } 
@@ -409,7 +409,7 @@ public class Client{
     }
     catch(Exception ex)
       {
-	System.out.println("Exception caught: "+ex);
+	System.out.println("||Send RTSP Request||Exception caught: "+ex);
 	System.exit(0);
       }
   }
