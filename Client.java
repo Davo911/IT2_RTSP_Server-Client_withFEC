@@ -23,6 +23,8 @@ public class Client{
   JButton playButton = new JButton("Play");
   JButton pauseButton = new JButton("Pause");
   JButton tearButton = new JButton("Teardown");
+  JButton optionButton = new JButton("Options");
+  JButton describeButton = new JButton("Describe");
   JPanel mainPanel = new JPanel();
   JPanel buttonPanel = new JPanel();
   JLabel iconLabel = new JLabel();
@@ -80,11 +82,15 @@ public class Client{
     buttonPanel.add(playButton);
     buttonPanel.add(pauseButton);
     buttonPanel.add(tearButton);
+    buttonPanel.add(describeButton);
+    buttonPanel.add(optionButton);
     setupButton.addActionListener(new setupButtonListener());
     playButton.addActionListener(new playButtonListener());
     pauseButton.addActionListener(new pauseButtonListener());
     tearButton.addActionListener(new tearButtonListener());
 
+    describeButton.addActionListener(new describeButtonListener());
+    optionButton.addActionListener(new optionButtonListener());
     //Image display label
     iconLabel.setIcon(null);
     
@@ -289,6 +295,22 @@ public class Client{
     }
   }
 
+  
+  //Händeler für Optionsbutton
+  //-----------------------------------------------------
+  class optionButtonListener implements ActionListener {
+    public void actionPerformed(ActionEvent e){
+
+    }
+  }
+  
+  //Händler für Describe Button
+  //------------------------------------------------------
+    class optionButtonListener implements ActionListener {
+    public void actionPerformed(ActionEvent e){
+
+    }
+  }
 
   //------------------------------------
   //Handler for timer
