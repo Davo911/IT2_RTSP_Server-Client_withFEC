@@ -294,23 +294,48 @@ public class Client{
 	}
     }
   }
-
-  
   //Händeler für Optionsbutton
   //-----------------------------------------------------
   class optionButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent e){
-
+        //increase RTSP sequence number
+        RTSPSeqNb++;
+        //Send OPTIONS message to the server
+        send_RTSP_request("OPTIONS");
+      //Wait for the response 
+        if (parse_server_response() != 200) {
+            System.out.println("Invalid Server Response");
+        }
+        else {     
+            System.out.println("Received response for OPTIONS");
+        }
     }
   }
   
   //Händler für Describe Button
   //------------------------------------------------------
-    class optionButtonListener implements ActionListener {
+    class describeButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent e){
+    	System.out.println("Sending DESCRIBE request");  
 
+        //increase RTSP sequence number
+        RTSPSeqNb++;
+
+        //Send DESCRIBE message to the server
+        send_RTSP_request("DESCRIBE");
+
+        //Wait for the response 
+        if (parse_server_response() != 200) {
+            System.out.println("Invalid Server Response");
+        }
+        else {     
+            System.out.println("Received response for DESCRIBE");
+        }
     }
   }
+
+  
+
 
   //------------------------------------
   //Handler for timer
