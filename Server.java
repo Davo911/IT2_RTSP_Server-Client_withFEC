@@ -48,6 +48,8 @@ public class Server extends JFrame implements ActionListener {
   final static int PLAY = 4;
   final static int PAUSE = 5;
   final static int TEARDOWN = 6;
+  final static int DESCRIBE = 7;
+  final static int OPTIONS = 8;
 
   static int state; //RTSP Server state == INIT or READY or PLAY
   Socket RTSPsocket; //socket used to send/receive RTSP messages
@@ -126,6 +128,8 @@ public class Server extends JFrame implements ActionListener {
       {
 	request_type = theServer.parse_RTSP_request(); //blocking
 	
+	System.out.println("REQUEST TYPE Nr: "+request_type);
+	
 	if (request_type == SETUP)
 	  {
 	    done = true;
@@ -149,40 +153,46 @@ public class Server extends JFrame implements ActionListener {
     while(true)
       {
 	//parse the request
-	request_type = theServer.parse_RTSP_request(); //blocking
-	    
-	if ((request_type == PLAY) && (state == READY))
-	  {
-	    //send back response
-	    theServer.send_RTSP_response();
-	    //start timer
-	    theServer.timer.start();
-	    //update state
-	    state = PLAYING;
-	    System.out.println("New RTSP state: PLAYING");
-	  }
-	else if ((request_type == PAUSE) && (state == PLAYING))
-	  {
-	    //send back response
-	    theServer.send_RTSP_response();
-	    //stop timer
-	    theServer.timer.stop();
-	    //update state
-	    state = READY;
-	    System.out.println("New RTSP state: READY");
-	  }
-	else if (request_type == TEARDOWN)
-	  {
-	    //send back response
-	    theServer.send_RTSP_response();
-	    //stop timer
-	    theServer.timer.stop();
-	    //close sockets
-	    theServer.RTSPsocket.close();
-	    theServer.RTPsocket.close();
-
-	    System.exit(0);
-	  }
+		request_type = theServer.parse_RTSP_request(); //blocking
+		    
+		if ((request_type == PLAY) && (state == READY))
+		  {
+		    //send back response
+		    theServer.send_RTSP_response();
+		    //start timer
+		    theServer.timer.start();
+		    //update state
+		    state = PLAYING;
+		    System.out.println("New RTSP state: PLAYING");
+		  }
+		else if ((request_type == PAUSE) && (state == PLAYING))
+		  {
+		    //send back response
+		    theServer.send_RTSP_response();
+		    //stop timer
+		    theServer.timer.stop();
+		    //update state
+		    state = READY;
+		    System.out.println("New RTSP state: READY");
+		  }
+		else if (request_type == TEARDOWN)
+		  {
+		    //send back response
+		    theServer.send_RTSP_response();
+		    //stop timer
+		    theServer.timer.stop();
+		    //close sockets
+		    theServer.RTSPsocket.close();
+		    theServer.RTPsocket.close();
+	
+		    System.exit(0);
+		  }else if (request_type == DESCRIBE) {
+	          System.out.println("Received DESCRIBE request");
+	          theServer.send_RTSP_describe();
+		  }else if (request_type == OPTIONS) {
+	          System.out.println("Received OPTIONS request");
+	          theServer.send_RTSP_options();
+		  }
       }
   }
 
@@ -260,6 +270,10 @@ public class Server extends JFrame implements ActionListener {
 	request_type = PAUSE;
       else if ((new String(request_type_string)).compareTo("TEARDOWN") == 0)
 	request_type = TEARDOWN;
+      else if ((new String(request_type_string)).compareTo("DESCRIBE") == 0)
+    request_type = DESCRIBE;
+      else if ((new String(request_type_string)).compareTo("OPTIONS") == 0)
+    request_type = OPTIONS;
 
       if (request_type == SETUP)
 	{
@@ -305,7 +319,7 @@ public class Server extends JFrame implements ActionListener {
       RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
       RTSPBufferedWriter.write("Session: "+RTSP_ID+CRLF);
       RTSPBufferedWriter.flush();
-      //System.out.println("RTSP Server - Sent response to Client.");
+      System.out.println("RTSP Server - Sent response to Client.");
     }
     catch(Exception ex)
       {
@@ -313,5 +327,46 @@ public class Server extends JFrame implements ActionListener {
 	System.exit(0);
       }
   }
+
+
+private void send_RTSP_describe() {
+
+	try {
+		
+		System.out.println("RTSP/1.0 200 OK"+CRLF);
+	    System.out.println("CSeq: "+RTSPSeqNb+CRLF);
+	    System.out.println("Content-Base: " + VideoFileName + CRLF);
+	    System.out.println("Content-Type: " + MJPEG_TYPE + CRLF);
+	    System.out.println("Content-Length: " + VIDEO_LENGTH + CRLF);
+		
+	    RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("Content-Base:" + VideoFileName + CRLF);
+	    RTSPBufferedWriter.write("Content-Type:" + MJPEG_TYPE + CRLF);
+	    RTSPBufferedWriter.write("Content-Length:" + VIDEO_LENGTH + CRLF);
+	    RTSPBufferedWriter.flush();
+	    
+	     System.out.println("RTSP Server - Sent response to Client.");
+	}catch(Exception ex) {
+        System.out.println("Exception caught at describe send: "+ex);
+        System.exit(0);
+	}
+
+}
+private void send_RTSP_options() {
+	try {
+		RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
+	    RTSPBufferedWriter.write("Send: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	}catch(Exception ex) {
+        System.out.println("Exception caught at options send: "+ex);
+        System.exit(0);
+
+	}
 }
 
+}
