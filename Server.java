@@ -333,12 +333,6 @@ private void send_RTSP_describe() {
 
 	try {
 		
-		System.out.println("RTSP/1.0 200 OK"+CRLF);
-	    System.out.println("CSeq: "+RTSPSeqNb+CRLF);
-	    System.out.println("Content-Base: " + VideoFileName + CRLF);
-	    System.out.println("Content-Type: " + MJPEG_TYPE + CRLF);
-	    System.out.println("Content-Length: " + VIDEO_LENGTH + CRLF);
-		
 	    RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
 	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
 	    RTSPBufferedWriter.write("Content-Base:" + VideoFileName + CRLF);

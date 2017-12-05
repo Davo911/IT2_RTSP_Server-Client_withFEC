@@ -54,7 +54,8 @@ public class Client{
   static String VideoFileName; //video file to request to the server
   int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
-
+  int desc = 0;
+  String destString = new String();
   final static String CRLF = "\r\n";
 
   //Video constants:
@@ -89,6 +90,8 @@ public class Client{
     pauseButton.addActionListener(new pauseButtonListener());
     tearButton.addActionListener(new tearButtonListener());
 
+    
+    
     describeButton.addActionListener(new describeButtonListener());
     optionButton.addActionListener(new optionButtonListener());
     //Image display label
@@ -317,13 +320,13 @@ public class Client{
     class describeButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent e){
     	System.out.println("Sending DESCRIBE request");  
-
+    	desc=1;
         //increase RTSP sequence number
         RTSPSeqNb++;
 
         //Send DESCRIBE message to the server
         send_RTSP_request("DESCRIBE");
-
+        descString = new String("DESCRIBE");
         //Wait for the response 
         if (parse_server_response() != 200) {
             System.out.println("Invalid Server Response");
@@ -408,10 +411,18 @@ public class Client{
 	  String SessionLine = RTSPBufferedReader.readLine();
 	  System.out.println(SessionLine);
 	
-	  //if state == INIT gets the Session Id from the SessionLine
-	  tokens = new StringTokenizer(SessionLine);
-	  tokens.nextToken(); //skip over the Session:
-	  RTSPid = Integer.parseInt(tokens.nextToken());
+	  if (state == INIT) {
+		  tokens = new StringTokenizer(SessionLine);
+		  tokens.nextToken(); //skip over the Session:
+		  RTSPid = Integer.parseInt(tokens.nextToken());
+	  }
+	  if(descString.compareTo("DESCRIBE") == 0) {
+		  for(int i = 0;i<3;i++) {
+		      String descLine = RTSPBufferedReader.readLine();
+		      //System.out.println("RTSP Client - Received from Server:");
+		      System.out.println(descLine);
+		  }
+	  }
 	}
     }
     catch(Exception ex)
