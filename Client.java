@@ -55,7 +55,7 @@ public class Client{
   int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0;
-  String destString = new String();
+  String descString = new String();
   final static String CRLF = "\r\n";
 
   //Video constants:
@@ -78,13 +78,14 @@ public class Client{
     });
 
     //Buttons
-    buttonPanel.setLayout(new GridLayout(1,0));
+    buttonPanel.setLayout(new GridLayout(2,0));
     buttonPanel.add(setupButton);
     buttonPanel.add(playButton);
     buttonPanel.add(pauseButton);
     buttonPanel.add(tearButton);
     buttonPanel.add(describeButton);
     buttonPanel.add(optionButton);
+
     setupButton.addActionListener(new setupButtonListener());
     playButton.addActionListener(new playButtonListener());
     pauseButton.addActionListener(new pauseButtonListener());
