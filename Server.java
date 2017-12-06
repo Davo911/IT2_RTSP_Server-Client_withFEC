@@ -19,6 +19,7 @@ public class Server extends JFrame implements ActionListener {
   DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
   DatagramPacket senddp; //UDP packet containing the video frames
 
+  JPanel mainPanel = new JPanel();
   InetAddress ClientIPAddr; //Client IP address
   int RTP_dest_port = 0; //destination port for RTP packets  (given by the RTSP Client)
 
@@ -87,8 +88,12 @@ public class Server extends JFrame implements ActionListener {
       }});
 
     //GUI:
+    
     label = new JLabel("Send frame #        ", JLabel.CENTER);
-    getContentPane().add(label, BorderLayout.CENTER);
+    getContentPane().add(label, BorderLayout.NORTH);
+    JSlider errWarsch = new JSlider(JSlider.HORIZONTAL,0,10,0);
+    getContentPane().add(errWarsch,BorderLayout.CENTER);
+
   }
           
   //------------------------------------
