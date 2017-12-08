@@ -11,6 +11,9 @@ import java.util.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.util.Random;
 
 public class Server extends JFrame implements ActionListener {
 
@@ -26,6 +29,8 @@ public class Server extends JFrame implements ActionListener {
   //GUI:
   //----------------
   JLabel label;
+  JSlider errWarsch;
+  JLabel lab_value;
 
   //Video variables:
   //----------------
@@ -62,7 +67,9 @@ public class Server extends JFrame implements ActionListener {
   int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
   
   final static String CRLF = "\r\n";
-
+  Random r = new Random();
+  float val_verlust;
+  double random;
   //--------------------------------
   //Constructor
   //--------------------------------
@@ -90,10 +97,19 @@ public class Server extends JFrame implements ActionListener {
     //GUI:
     
     label = new JLabel("Send frame #        ", JLabel.CENTER);
+    lab_value = new JLabel("Wahrscheinlichkeit: 0.0", JLabel.CENTER);
     getContentPane().add(label, BorderLayout.NORTH);
-    JSlider errWarsch = new JSlider(JSlider.HORIZONTAL,0,10,0);
+    getContentPane().add(lab_value, BorderLayout.SOUTH);
+    errWarsch = new JSlider(JSlider.HORIZONTAL,0,10,0);
     getContentPane().add(errWarsch,BorderLayout.CENTER);
-
+    
+    errWarsch.addChangeListener(new ChangeListener() {
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			 val_verlust = (float)((JSlider) e.getSource()).getValue()/10;
+			 lab_value.setText("Wahrscheinlichkeit: "+ val_verlust);
+		}
+    });
   }
           
   //------------------------------------
@@ -206,49 +222,53 @@ public class Server extends JFrame implements ActionListener {
   //Handler for timer
   //------------------------
   public void actionPerformed(ActionEvent e) {
-
-    //if the current image nb is less than the length of the video
-    if (imagenb < VIDEO_LENGTH)
-      {
-	//update current imagenb
-	imagenb++;
-       
-	try {
-	  //get next frame to send from the video, as well as its size
-	  int image_length = video.getnextframe(buf);
-
-	  //Builds an RTPpacket object containing the frame
-	  RTPpacket rtp_packet = new RTPpacket(MJPEG_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, image_length);
-	  
-	  //get to total length of the full rtp packet to send
-	  int packet_length = rtp_packet.getlength();
-
-	  //retrieve the packet bitstream and store it in an array of bytes
-	  byte[] packet_bits = new byte[packet_length];
-	  rtp_packet.getpacket(packet_bits);
-
-	  //send the packet as a DatagramPacket over the UDP socket 
-	  senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
-	  RTPsocket.send(senddp);
-
-	  //System.out.println("Send frame #"+imagenb);
-	  //print the header bitstream
-	  rtp_packet.printheader();
-
-	  //update GUI
-	  label.setText("Send frame #" + imagenb);
-	}
-	catch(Exception ex)
-	  {
-	    System.out.println("||Handler for timer|| Exception caught: "+ex);
-	    System.exit(0);
+	  random = 0 + r.nextDouble() * (1 - 0);
+	  System.out.println(random +"<="+ val_verlust+"???");
+	  if(random <= val_verlust){
+	    //if the current image nb is less than the length of the video
+	    if (imagenb < VIDEO_LENGTH)
+	      {
+		//update current imagenb
+		imagenb++;
+	       
+		try {
+		  //get next frame to send from the video, as well as its size
+		  int image_length = video.getnextframe(buf);
+	
+		  //Builds an RTPpacket object containing the frame
+		  RTPpacket rtp_packet = new RTPpacket(MJPEG_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, image_length);
+		  
+		  //get to total length of the full rtp packet to send
+		  int packet_length = rtp_packet.getlength();
+	
+		  //retrieve the packet bitstream and store it in an array of bytes
+		  byte[] packet_bits = new byte[packet_length];
+		  rtp_packet.getpacket(packet_bits);
+	
+		  //send the packet as a DatagramPacket over the UDP socket 
+		  senddp = new DatagramPacket(packet_bits, packet_length, ClientIPAddr, RTP_dest_port);
+		  RTPsocket.send(senddp);
+	
+		  //System.out.println("Send frame #"+imagenb);
+		  //print the header bitstream
+		  rtp_packet.printheader();
+	
+		  //update GUI
+		  label.setText("Send frame #" + imagenb);
+		}
+		catch(Exception ex)
+		  {
+		    System.out.println("||Handler for timer|| Exception caught: "+ex);
+		    System.exit(0);
+		  }
+	      }
+	    else
+	      {
+		//if we have reached the end of the video file, stop the timer
+		timer.stop();
+	      }
 	  }
-      }
-    else
-      {
-	//if we have reached the end of the video file, stop the timer
-	timer.stop();
-      }
+    
   }
 
   //------------------------------------
