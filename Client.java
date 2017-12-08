@@ -27,8 +27,17 @@ public class Client{
   JButton describeButton = new JButton("Describe");
   JPanel mainPanel = new JPanel();
   JPanel buttonPanel = new JPanel();
+  JPanel stats = new JPanel();
   JLabel iconLabel = new JLabel();
   ImageIcon icon;
+  JLabel lost = new JLabel("Lost:");
+  JLabel korr = new JLabel("Korrigierbar:");
+
+  /*
+  Anzahl erhaltener/verlorener Medienpakete + prozentuale Angabe
+  Anzahl korrigierter/unkorrigierbarer Medienpakete
+  Die Anzeige sollte bis zum Ende des Videos sekündlich aktualisiert werden und dann auf dem Gesamtstand stehen bleiben.
+*/
 
 
   //RTP variables:
@@ -56,6 +65,10 @@ public class Client{
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0;
   String descString = new String();
+  int val_lost;
+  
+  
+  
   final static String CRLF = "\r\n";
 
   //Video constants:
@@ -91,21 +104,24 @@ public class Client{
     pauseButton.addActionListener(new pauseButtonListener());
     tearButton.addActionListener(new tearButtonListener());
 
-    
-    
     describeButton.addActionListener(new describeButtonListener());
     optionButton.addActionListener(new optionButtonListener());
     //Image display label
     iconLabel.setIcon(null);
     
     //frame layout
-    mainPanel.setLayout(null);
-    mainPanel.add(iconLabel);
-    mainPanel.add(buttonPanel);
+    mainPanel.setLayout(new BorderLayout());
+    mainPanel.add(iconLabel,BorderLayout.NORTH);
+    mainPanel.add(stats,BorderLayout.NORTH);
+    mainPanel.add(buttonPanel,BorderLayout.SOUTH);
     iconLabel.setBounds(0,0,380,280);
     buttonPanel.setBounds(0,280,380,50);
 
-    f.getContentPane().add(mainPanel, BorderLayout.CENTER);
+    stats.setLayout(new GridLayout(1,3));
+    stats.add(lost);
+    stats.add(korr);
+    
+    f.getContentPane().add(mainPanel);
     f.setSize(new Dimension(390,370));
     f.setVisible(true);
 
