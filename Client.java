@@ -65,8 +65,8 @@ public class Client{
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0;
   String descString = new String();
-  int val_lost;
-  
+  int val_lost = 0;
+  int pack_count = 0;
   
   
   final static String CRLF = "\r\n";
@@ -111,7 +111,7 @@ public class Client{
     
     //frame layout
     mainPanel.setLayout(new BorderLayout());
-    mainPanel.add(iconLabel,BorderLayout.NORTH);
+    mainPanel.add(iconLabel,BorderLayout.CENTER);
     mainPanel.add(stats,BorderLayout.NORTH);
     mainPanel.add(buttonPanel,BorderLayout.SOUTH);
     iconLabel.setBounds(0,0,380,280);
@@ -363,35 +363,40 @@ public class Client{
   
   class timerListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-
+    
       //Construct a DatagramPacket to receive data from the UDP socket
       rcvdp = new DatagramPacket(buf, buf.length);
 
       try{
-	//receive the DP from the socket:
-	RTPsocket.receive(rcvdp);
- 
-	//create an RTPpacket object from the DP
-	RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+		    
+			//receive the DP from the socket:
+			RTPsocket.receive(rcvdp);
+		 
+			//create an RTPpacket object from the DP
+			RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+			
+			
+			//print important header fields of the RTP packet received: 
+			System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
+		
+			//print header bitstream:
+			rtp_packet.printheader();
+		
+			//get the payload bitstream from the RTPpacket object
+			int payload_length = rtp_packet.getpayload_length();
+			byte [] payload = new byte[payload_length];
+			rtp_packet.getpayload(payload);
+		
+			//get an Image object from the payload bitstream
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			Image image = toolkit.createImage(payload, 0, payload_length);
+		
+			//display the image as an ImageIcon object
+			icon = new ImageIcon(image);
+			iconLabel.setIcon(icon);
+			pack_count++;
+			lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
 
-	//print important header fields of the RTP packet received: 
-	System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-
-	//print header bitstream:
-	rtp_packet.printheader();
-
-	//get the payload bitstream from the RTPpacket object
-	int payload_length = rtp_packet.getpayload_length();
-	byte [] payload = new byte[payload_length];
-	rtp_packet.getpayload(payload);
-
-	//get an Image object from the payload bitstream
-	Toolkit toolkit = Toolkit.getDefaultToolkit();
-	Image image = toolkit.createImage(payload, 0, payload_length);
-
-	//display the image as an ImageIcon object
-	icon = new ImageIcon(image);
-	iconLabel.setIcon(icon);
       }
       catch (InterruptedIOException iioe){
 	//System.out.println("Nothing to read");
