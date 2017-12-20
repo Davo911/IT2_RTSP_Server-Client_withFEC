@@ -256,6 +256,21 @@ public class Server extends JFrame implements ActionListener {
 				  //update GUI
 				  label.setText("Send frame #" + imagenb);
 			  }
+			  
+			  
+			  
+			  //FEC Handler
+			  /*
+			  fec packet set data buf,imagelength
+			  if imagenb % FECGrp ==0
+			  imagelenght = fecpacket.getdata(buf)
+			  
+			  ###build rtp packet HERE
+			  
+			  
+			  
+			  
+			  */
 			}
 			catch(Exception ex)
 			  {
