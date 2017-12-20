@@ -360,9 +360,9 @@ private void send_RTSP_describe() {
 		
 	    RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
 	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-	    RTSPBufferedWriter.write("Content-Base:" + VideoFileName + CRLF);
-	    RTSPBufferedWriter.write("Content-Type:" + MJPEG_TYPE + CRLF);
-	    RTSPBufferedWriter.write("Content-Length:" + VIDEO_LENGTH + CRLF);
+	    RTSPBufferedWriter.write("Content-Base: " + VideoFileName + CRLF);
+	    RTSPBufferedWriter.write("Content-Type: " + MJPEG_TYPE + CRLF);
+	    RTSPBufferedWriter.write("Content-Length: " + VIDEO_LENGTH + CRLF);
 	    RTSPBufferedWriter.flush();
 	    
 	     System.out.println("RTSP Server - Sent response to Client.");
@@ -375,12 +375,14 @@ private void send_RTSP_describe() {
 private void send_RTSP_options() {
 	try {
 		RTSPBufferedWriter.write("RTSP/1.0 200 OK"+CRLF);
-	    RTSPBufferedWriter.write("Send: "+RTSPSeqNb+CRLF);
 	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
-	    RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
+	    RTSPBufferedWriter.write("Methodes:"+CRLF);
+	    RTSPBufferedWriter.write("Setup(): "+CRLF);
+	    RTSPBufferedWriter.write("Play(): "+CRLF);
+	    RTSPBufferedWriter.write("Pause(): "+CRLF);
+	    RTSPBufferedWriter.write("Describe(): "+CRLF);
+	    RTSPBufferedWriter.write("Options(): "+CRLF);
+	    RTSPBufferedWriter.flush();
 	}catch(Exception ex) {
         System.out.println("Exception caught at options send: "+ex);
         System.exit(0);

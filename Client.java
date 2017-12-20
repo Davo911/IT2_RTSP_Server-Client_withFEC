@@ -63,8 +63,9 @@ public class Client{
   static String VideoFileName; //video file to request to the server
   int RTSPSeqNb = 0; //Sequence number of RTSP messages within the session
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
-  int desc = 0;
-  String descString = new String();
+  int desc = 0, opt = 0;
+  String descoptString = new String();
+  
   int val_lost = 0;
   int pack_count = 0;
   
@@ -318,10 +319,13 @@ public class Client{
   //-----------------------------------------------------
   class optionButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent e){
+    	System.out.println("Sending OPTIONS request"); 
         //increase RTSP sequence number
         RTSPSeqNb++;
+        opt=1;
         //Send OPTIONS message to the server
         send_RTSP_request("OPTIONS");
+        descoptString = new String("OPTIONS");
       //Wait for the response 
         if (parse_server_response() != 200) {
             System.out.println("Invalid Server Response");
@@ -343,7 +347,7 @@ public class Client{
 
         //Send DESCRIBE message to the server
         send_RTSP_request("DESCRIBE");
-        descString = new String("DESCRIBE");
+        descoptString = new String("DESCRIBE");
         //Wait for the response 
         if (parse_server_response() != 200) {
             System.out.println("Invalid Server Response");
@@ -438,11 +442,19 @@ public class Client{
 		  tokens.nextToken(); //skip over the Session:
 		  RTSPid = Integer.parseInt(tokens.nextToken());
 	  }
-	  if(descString.compareTo("DESCRIBE") == 0) {
-		  for(int i = 0;i<3;i++) {
+	  if(descoptString.compareTo("DESCRIBE") == 0) {
+		  for(int i = 0;i<2;i++) {
 		      String descLine = RTSPBufferedReader.readLine();
 		      //System.out.println("RTSP Client - Received from Server:");
 		      System.out.println(descLine);
+		  }
+	  }
+	  
+	  if(descoptString.compareTo("OPTIONS") == 0) {
+		  for(int i = 0;i<5;i++) {
+		      String optLine = RTSPBufferedReader.readLine();
+		      //System.out.println("RTSP Client - Received from Server:");
+		      System.out.println(optLine);
 		  }
 	  }
 	}
