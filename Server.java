@@ -30,7 +30,8 @@ public class Server extends JFrame implements ActionListener {
   //----------------
   JLabel label;
   JSlider errWarsch;
-  JLabel lab_value;
+  JSlider frameSize;
+  JLabel lab_value,lab_frameval;
 
   //Video variables:
   //----------------
@@ -39,7 +40,7 @@ public class Server extends JFrame implements ActionListener {
   static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
   static int FRAME_PERIOD = 40; //Frame period of the video to stream, in ms
   static int VIDEO_LENGTH = 500; //length of the video in frames
-
+  static int FEC_TYPE = 127;
   Timer timer; //timer used to send the images at the video frame rate
   byte[] buf; //buffer used to store the images to send to the client 
 
@@ -70,11 +71,12 @@ public class Server extends JFrame implements ActionListener {
   Random r = new Random();
   float val_verlust = 1;
   double random;
+  int FECGrp = 2; //FEC Fenster
+  FECpacket FECpacket;
   //--------------------------------
   //Constructor
   //--------------------------------
   public Server(){
-
     //init Frame
     super("Server");
 
@@ -86,6 +88,9 @@ public class Server extends JFrame implements ActionListener {
     //allocate memory for the sending buffer
     buf = new byte[15000]; 
 
+	//init FEC
+	  FECpacket = new FECpacket();
+	  
     //Handler to close the main window
     addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
@@ -98,17 +103,34 @@ public class Server extends JFrame implements ActionListener {
     
     label = new JLabel("Send frame #        ", JLabel.CENTER);
     lab_value = new JLabel("Sendewahrscheinlichkeit: 1.0", JLabel.CENTER);
-    getContentPane().add(label, BorderLayout.NORTH);
-    getContentPane().add(lab_value, BorderLayout.SOUTH);
-    errWarsch = new JSlider(JSlider.HORIZONTAL,0,10,10);
-    getContentPane().add(errWarsch,BorderLayout.CENTER);
-    
+    lab_frameval = new JLabel("Fenstergröße: 2", JLabel.CENTER);
+    errWarsch = new JSlider(JSlider.HORIZONTAL,0,100,100);
+    errWarsch.setPaintLabels(true);
+    errWarsch.setPaintTicks(true);
+    errWarsch.setMajorTickSpacing(10);
+    frameSize = new JSlider(JSlider.HORIZONTAL,1,10,2);
+    frameSize.setPaintLabels(true);
+    frameSize.setPaintTicks(true);
+    frameSize.setMajorTickSpacing(1);
+
+    this.add(label);
+    this.add(errWarsch);
+    this.add(lab_value);
+    this.add(frameSize);
+    this.add(lab_frameval);
     errWarsch.addChangeListener(new ChangeListener() {
 		@Override
 		public void stateChanged(ChangeEvent e) {
-			 val_verlust = (float)((JSlider) e.getSource()).getValue()/10;
+			 val_verlust = (float)((JSlider) e.getSource()).getValue()/100;
 			 lab_value.setText("Sendewahrscheinlichkeit: "+ val_verlust);
 		}
+    });
+    frameSize.addChangeListener(new ChangeListener() {
+    	@Override
+    	public void stateChanged(ChangeEvent e) {
+    		FECGrp = (int)((JSlider) e.getSource()).getValue();
+    		lab_frameval.setText("Fenstergröße: "+ FECGrp);
+    	}
     });
   }
           
@@ -121,7 +143,9 @@ public class Server extends JFrame implements ActionListener {
     Server theServer = new Server();
 
     //show GUI:
-    theServer.pack();
+    theServer.setSize(500, 200);
+    theServer.setLayout(new GridLayout(5,1));
+    //theServer.pack();
     theServer.setVisible(true);
 
     //get RTSP socket port from the command line
@@ -260,17 +284,31 @@ public class Server extends JFrame implements ActionListener {
 			  
 			  
 			  //FEC Handler
-			  /*
-			  fec packet set data buf,imagelength
-			  if imagenb % FECGrp ==0
-			  imagelenght = fecpacket.getdata(buf)
+			  FECpacket.setdata(buf,image_length);
+			  if(imagenb % FECGrp == 0){
+				int FEC_length = FECpacket.getdata(buf);
+			  	//build rtp packet HERE
+			  	
+			  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, imagenb*FRAME_PERIOD, FECpacket.buf, FEC_length);
+			  	
+			  	int fecpack_length = rtp_packet_fec.getlength();
+			  	byte[] fec_bits = new byte[fecpack_length];
+			  	rtp_packet_fec.getpacket(fec_bits);
+			  	senddp = new DatagramPacket(fec_bits, fecpack_length, ClientIPAddr, RTP_dest_port);
+			  	RTPsocket.send(senddp);
+			  	rtp_packet.printheader();
+			  	System.out.println("Send FEC #"+imagenb);
+			  	FECpacket = new FECpacket();
+			  	
+			  }
 			  
-			  ###build rtp packet HERE
 			  
 			  
 			  
 			  
-			  */
+			  
+			  
+
 			}
 			catch(Exception ex)
 			  {

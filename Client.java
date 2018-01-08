@@ -7,6 +7,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class Client{
   DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
   static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
   
-  Timer timer; //timer used to receive data from the UDP socket
+  Timer timer_calc,timer_disp; //timer used to receive data from the UDP socket
   byte[] buf; //buffer used to store data received from the server 
  
   //RTSP variables
@@ -65,7 +66,7 @@ public class Client{
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0, opt = 0;
   String descoptString = new String();
-  
+  List<RTPpacket> rtp_list;
   int val_lost = 0;
   int pack_count = 0;
   
@@ -128,12 +129,20 @@ public class Client{
 
     //init timer
     //--------------------------
-    timer = new Timer(20, new timerListener());
-    timer.setInitialDelay(0);
-    timer.setCoalesce(true);
-
+    timer_disp = new Timer(20, new timerListener());
+    timer_disp.setInitialDelay(1000);
+    timer_disp.setCoalesce(true);
+    
+    timer_calc = new Timer(40, new timerListenerDisp());
+    timer_calc.setInitialDelay(0);
+    timer_calc.setCoalesce(true);
+    
+   
+    
     //allocate enough memory for the buffer used to receive data from the server
     buf = new byte[15000];    
+    
+    rtp_list = new ArrayList<RTPpacket>();
   }
 
   //------------------------------------
@@ -245,7 +254,8 @@ public class Client{
 	      System.out.println("New RTSP state: PLAYING\n");
 
 	      //start the timer
-	      timer.start();
+	      timer_calc.start();
+	      timer_disp.start();
 	    }
 	}//else if state != READY then do nothing
     }
@@ -277,7 +287,7 @@ public class Client{
 	      System.out.println("New RTSP state: READY\n");
 	      
 	      //stop the timer
-	      timer.stop();
+	      timer_disp.stop();
 	    }
 	}
       //else if state != PLAYING then do nothing
@@ -308,8 +318,8 @@ public class Client{
 	  System.out.println("New RTSP state: INIT");
 
 	  //stop the timer
-	  timer.stop();
-
+	  timer_disp.stop();
+	  timer_calc.stop();
 	  //exit
 	  System.exit(0);
 	}
@@ -390,7 +400,8 @@ public class Client{
 			int payload_length = rtp_packet.getpayload_length();
 			byte [] payload = new byte[payload_length];
 			rtp_packet.getpayload(payload);
-		
+			
+			
 			//get an Image object from the payload bitstream
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
 			Image image = toolkit.createImage(payload, 0, payload_length);
@@ -398,7 +409,9 @@ public class Client{
 			//display the image as an ImageIcon object
 			icon = new ImageIcon(image);
 			iconLabel.setIcon(icon);
-			pack_count++;
+			if(rtp_packet.PayloadType != 127){ //Wenn kein FEC 
+				pack_count++;
+			}
 			lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
 
       }
@@ -411,6 +424,25 @@ public class Client{
     }
   }
 
+  class timerListenerDisp implements ActionListener {
+	    public void actionPerformed(ActionEvent e) {
+	    	try{
+	    		RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+
+	    	}
+    		catch (IOException ioe) {
+    			System.out.println("||Handler for disp_r timer||Exception caught: "+ioe);
+    		}
+	    }
+  }
+  
+  
+  
+  
+  
+  
+  
+  
   //------------------------------------
   //Parse Server Response
   //------------------------------------
