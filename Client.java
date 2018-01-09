@@ -396,30 +396,17 @@ public class Client{
 			//print header bitstream:
 			rtp_packet.printheader();
 		
-			//get the payload bitstream from the RTPpacket object
-			int payload_length = rtp_packet.getpayload_length();
-			byte [] payload = new byte[payload_length];
-			rtp_packet.getpayload(payload);
 			
-			
-			//get an Image object from the payload bitstream
-			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			Image image = toolkit.createImage(payload, 0, payload_length);
-		
-			//display the image as an ImageIcon object
-			icon = new ImageIcon(image);
-			iconLabel.setIcon(icon);
-			if(rtp_packet.PayloadType != 127){ //Wenn kein FEC 
-				pack_count++;
-			}
-			lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
 
+			//Add packets to 
+    		RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+    		rtp_list.add(rtp_packet);
       }
       catch (InterruptedIOException iioe){
 	//System.out.println("Nothing to read");
       }
       catch (IOException ioe) {
-	System.out.println("||Handler for timer||Exception caught: "+ioe);
+	System.out.println("||Handler for calc_timer||Exception caught: "+ioe);
       }
     }
   }
@@ -427,7 +414,26 @@ public class Client{
   class timerListenerDisp implements ActionListener {
 	    public void actionPerformed(ActionEvent e) {
 	    	try{
-	    		RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+
+	    		
+	    		//get the payload bitstream from the RTPpacket object
+				int payload_length = rtp_packet.getpayload_length();
+				byte [] payload = new byte[payload_length];
+				rtp_packet.getpayload(payload);
+				
+				
+				//get an Image object from the payload bitstream
+				Toolkit toolkit = Toolkit.getDefaultToolkit();
+				Image image = toolkit.createImage(payload, 0, payload_length);
+			
+				//display the image as an ImageIcon object
+				icon = new ImageIcon(image);
+				iconLabel.setIcon(icon);
+				if(rtp_packet.PayloadType != 127){ //Wenn kein FEC 
+					pack_count++;
+				}
+				//Lost Packets counter
+				lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
 
 	    	}
     		catch (IOException ioe) {
