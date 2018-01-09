@@ -8,18 +8,25 @@ public class FECpacket
     byte[][] fecstack;   // Puffer für FEC-Pakete 
     int count = 0;
     int max = 15000;
+    int max_frames = 500;
     byte[] buf;
-    int FECNr;
+    int FECNr,corrected;
+    
     
     
     // SENDER --------------------------------------
     public FECpacket(){
+    	mediastack = new byte[max_frames][];
+    	fecstack = new byte[max_frames][];
     	buf = new byte[max];
     }
 
     // RECEIVER ------------------------------------
-    public FECpacket( int FEC_group){
-    	
+    public FECpacket( int FECgroup){
+    	buf = new byte[max];
+    	mediastack = new byte[max_frames][];
+    	fecstack = new byte[max_frames][];
+    	FEC_group = FECgroup;
     	
     }
         
@@ -48,37 +55,50 @@ public class FECpacket
     public int getdata( byte[] data){
     	for(int i = 0;i<count;i++){
     		data[i] = buf[i];
-    		Arrays.fill(buf, (byte) 0);
     	}
-    	
-    	
     	return count;
     }
     
-/*
+
 
     // ------------------------------------------------
     // *** RECEIVER *** 
     // ------------------------------------------------
     // speichert UDP-Payload, Nr. des Bildes
     public void rcvdata( int nr, byte[] data){
-    	
+    	mediastack[nr] = new byte[data.length];
+    	for(int i = 0; i<data.length;i++) {
+    		mediastack[nr][i] = data[i];
+    	}
     }
 
     // speichert FEC-Daten, Nr. eines Bildes der Gruppe    
     public void rcvfec( int nr, byte[] data){
-    	
+    	fecstack[nr] = new byte[data.length];
+    	for(int i = 0; i<data.length;i++) {
+    		fecstack[nr][i] = data[i];
+    	}
     }
-    
+    /*
     // übergibt vorhandenes/korrigiertes Paket oder Fehler (null)    
     public byte[] getjpeg( int nr){
+    	if(//mehr als 1 Paket in der Grp fehlt ) {
+    		return null;
+    	}else{
+    		for(int i=0;i<Bildlänge;i++) {
+    			//XOR aller in der grp befindlichen bilder, mit fec 
+    		}
+    		corrected++;
+    		return //ergebnis
+    	}
     	
-    	;
     }
+    */
     
     // für Statistik, Anzahl der korrigierten Pakete
     public int getNrCorrected(){
     	
+    	return corrected;
     }
-    */
+    
 }

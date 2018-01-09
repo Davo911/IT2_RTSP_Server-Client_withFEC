@@ -66,13 +66,13 @@ public class Client{
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0, opt = 0;
   String descoptString = new String();
-  List<RTPpacket> rtp_list;
+
   int val_lost = 0;
   int pack_count = 0;
-  
-  
+  int disp_count = 0; //Welches Paket als nächstes abgespielt wird
+  int last = 0; 		//Letzte Paketnummer
   final static String CRLF = "\r\n";
-
+  FECpacket FECpacket;
   //Video constants:
   //------------------
   static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
@@ -130,7 +130,7 @@ public class Client{
     //init timer
     //--------------------------
     timer_disp = new Timer(20, new timerListener());
-    timer_disp.setInitialDelay(1000);
+    timer_disp.setInitialDelay(0);
     timer_disp.setCoalesce(true);
     
     timer_calc = new Timer(40, new timerListenerDisp());
@@ -142,7 +142,7 @@ public class Client{
     //allocate enough memory for the buffer used to receive data from the server
     buf = new byte[15000];    
     
-    rtp_list = new ArrayList<RTPpacket>();
+
   }
 
   //------------------------------------
@@ -288,6 +288,7 @@ public class Client{
 	      
 	      //stop the timer
 	      timer_disp.stop();
+	      timer_calc.stop();
 	    }
 	}
       //else if state != PLAYING then do nothing
@@ -396,11 +397,24 @@ public class Client{
 			//print header bitstream:
 			rtp_packet.printheader();
 		
+			//#####FEC Berrechnung
+			if (rtp_packet.PayloadType == 127) {
+				
+			}else {
+				
+			}
+			
+    		//get the payload bitstream from the RTPpacket object
+			int payload_length = rtp_packet.getpayload_length();
+			byte [] payload = new byte[payload_length];
+			rtp_packet.getpayload(payload);
+			
+			//write received image(payload) into mediastack
+			FECpacket.rcvdata(rtp_packet.getsequencenumber(), payload);
 			
 
-			//Add packets to 
-    		RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
-    		rtp_list.add(rtp_packet);
+    		//store last packetNr
+    		last = rtp_packet.getsequencenumber();
       }
       catch (InterruptedIOException iioe){
 	//System.out.println("Nothing to read");
@@ -414,30 +428,32 @@ public class Client{
   class timerListenerDisp implements ActionListener {
 	    public void actionPerformed(ActionEvent e) {
 	    	try{
-
 	    		
-	    		//get the payload bitstream from the RTPpacket object
-				int payload_length = rtp_packet.getpayload_length();
-				byte [] payload = new byte[payload_length];
-				rtp_packet.getpayload(payload);
 				
-				
+	    		
 				//get an Image object from the payload bitstream
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
-				Image image = toolkit.createImage(payload, 0, payload_length);
-			
+				Image image = toolkit.createImage(FECpacket.mediastack[last], 0, FECpacket.mediastack[last].length);
+				
 				//display the image as an ImageIcon object
 				icon = new ImageIcon(image);
 				iconLabel.setIcon(icon);
-				if(rtp_packet.PayloadType != 127){ //Wenn kein FEC 
+				
+				/*
+				if(rtp_list.get(disp_count).PayloadType != 127){ //Wenn kein FEC 
 					pack_count++;
 				}
+				*/
+	
+				
+				
 				//Lost Packets counter
-				lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
-
+				//lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
+				//lost.setText("Zeige Frame : "+ rtp_list.get(disp_count).getsequencenumber());
+				disp_count++;//next Paket
 	    	}
-    		catch (IOException ioe) {
-    			System.out.println("||Handler for disp_r timer||Exception caught: "+ioe);
+    		catch (Exception disp_e) {
+    			System.out.println("||Handler for disp_r timer||Exception caught: "+disp_e);
     		}
 	    }
   }

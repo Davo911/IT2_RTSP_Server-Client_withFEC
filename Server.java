@@ -38,7 +38,7 @@ public class Server extends JFrame implements ActionListener {
   int imagenb = 0; //image nb of the image currently transmitted
   VideoStream video; //VideoStream object used to access video frames
   static int MJPEG_TYPE = 26; //RTP payload type for MJPEG video
-  static int FRAME_PERIOD = 40; //Frame period of the video to stream, in ms
+  static int FRAME_PERIOD = 20; //Frame period of the video to stream, in ms
   static int VIDEO_LENGTH = 500; //length of the video in frames
   static int FEC_TYPE = 127;
   Timer timer; //timer used to send the images at the video frame rate
@@ -71,7 +71,7 @@ public class Server extends JFrame implements ActionListener {
   Random r = new Random();
   float val_verlust = 1;
   double random;
-  int FECGrp = 2; //FEC Fenster
+  public int FECGrp = 2; //FEC Fenster
   FECpacket FECpacket;
   //--------------------------------
   //Constructor
@@ -108,7 +108,7 @@ public class Server extends JFrame implements ActionListener {
     errWarsch.setPaintLabels(true);
     errWarsch.setPaintTicks(true);
     errWarsch.setMajorTickSpacing(10);
-    frameSize = new JSlider(JSlider.HORIZONTAL,1,10,2);
+    frameSize = new JSlider(JSlider.HORIZONTAL,0,10,2);
     frameSize.setPaintLabels(true);
     frameSize.setPaintTicks(true);
     frameSize.setMajorTickSpacing(1);
@@ -282,31 +282,27 @@ public class Server extends JFrame implements ActionListener {
 			  }
 			  
 			  
-			  
-			  //FEC Handler
-			  FECpacket.setdata(buf,image_length);
-			  if(imagenb % FECGrp == 0){
-				int FEC_length = FECpacket.getdata(buf);
-			  	//build rtp packet HERE
-			  	
-			  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, imagenb*FRAME_PERIOD, FECpacket.buf, FEC_length);
-			  	
-			  	int fecpack_length = rtp_packet_fec.getlength();
-			  	byte[] fec_bits = new byte[fecpack_length];
-			  	rtp_packet_fec.getpacket(fec_bits);
-			  	senddp = new DatagramPacket(fec_bits, fecpack_length, ClientIPAddr, RTP_dest_port);
-			  	RTPsocket.send(senddp);
-			  	rtp_packet.printheader();
-			  	System.out.println("Send FEC #"+imagenb);
-			  	FECpacket = new FECpacket();
-			  	
+			  if(FECGrp != 0) {
+				  //FEC Handler
+				  FECpacket.setdata(buf,image_length);
+				  if(imagenb % FECGrp == 0){
+					int FEC_length = FECpacket.getdata(buf);
+				  	//build rtp packet HERE Achtung Time = Framegröße stattdessen
+				  	
+				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, FECGrp, FECpacket.buf, FEC_length);
+				  	
+				  	//Verpacke unds schicke FEC Paket
+				  	int fecpack_length = rtp_packet_fec.getlength();
+				  	byte[] fec_bits = new byte[fecpack_length];
+				  	rtp_packet_fec.getpacket(fec_bits);
+				  	senddp = new DatagramPacket(fec_bits, fecpack_length, ClientIPAddr, RTP_dest_port);
+				  	RTPsocket.send(senddp);
+				  	rtp_packet.printheader();
+				  	System.out.println("Send FEC #"+imagenb);
+				  	FECpacket = new FECpacket();
+				  	
+				  }
 			  }
-			  
-			  
-			  
-			  
-			  
-			  
 			  
 
 			}
