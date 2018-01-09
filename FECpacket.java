@@ -7,8 +7,8 @@ public class FECpacket
     byte[][] mediastack; // Puffer für Medienpakete
     byte[][] fecstack;   // Puffer für FEC-Pakete 
     int count = 0;
-    int max = 15000;
-    int max_frames = 500;
+    int max = 15000;	 //max bytes
+    int max_frames = 500;//max Bilder
     byte[] buf;
     int FECNr,corrected;
     
