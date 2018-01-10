@@ -27,7 +27,6 @@ public class FECpacket
     	mediastack = new byte[max_frames][];
     	fecstack = new byte[max_frames][];
     	FEC_group = FECgroup;
-    	
     }
         
     
@@ -53,10 +52,11 @@ public class FECpacket
     
     // holt fertiges FEC-Paket, Rückgabe: Paketlänge 
     public int getdata( byte[] data){
-    	for(int i = 0;i<count;i++){
+    	int i;
+    	for(i = 0;i<buf.length;i++){
     		data[i] = buf[i];
     	}
-    	return count;
+    	return i;
     }
     
 

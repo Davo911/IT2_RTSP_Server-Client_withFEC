@@ -288,8 +288,7 @@ public class Server extends JFrame implements ActionListener {
 				  if(imagenb % FECGrp == 0){
 					int FEC_length = FECpacket.getdata(buf);
 				  	//build rtp packet HERE Achtung Time = Framegröße stattdessen
-				  	
-				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, FECGrp, FECpacket.buf, FEC_length);
+				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, FECGrp, buf, FEC_length);
 				  	
 				  	//Verpacke unds schicke FEC Paket
 				  	int fecpack_length = rtp_packet_fec.getlength();

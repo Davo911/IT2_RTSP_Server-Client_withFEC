@@ -31,8 +31,9 @@ public class Client{
   JPanel stats = new JPanel();
   JLabel iconLabel = new JLabel();
   ImageIcon icon;
-  JLabel lost = new JLabel("Lost:");
-  JLabel korr = new JLabel("Korrigierbar:");
+  JLabel lost = new JLabel("Lost: ");
+  JLabel korr = new JLabel("Korrigierbar: ");
+  JLabel framenr = new JLabel("Frame: ");
 
   /*
   Anzahl erhaltener/verlorener Medienpakete + prozentuale Angabe
@@ -66,7 +67,7 @@ public class Client{
   int RTSPid = 0; //ID of the RTSP session (given by the RTSP Server)
   int desc = 0, opt = 0;
   String descoptString = new String();
-
+  int FECGrp;
   int val_lost = 0;
   int pack_count = 0;
   int disp_count = 0; //Welches Paket als nächstes abgespielt wird
@@ -120,6 +121,7 @@ public class Client{
     buttonPanel.setBounds(0,280,380,50);
 
     stats.setLayout(new GridLayout(1,3));
+    stats.add(framenr);
     stats.add(lost);
     stats.add(korr);
     
@@ -142,6 +144,9 @@ public class Client{
     //allocate enough memory for the buffer used to receive data from the server
     buf = new byte[15000];    
     
+    
+    
+    FECpacket = new FECpacket();
 
   }
 
@@ -383,38 +388,41 @@ public class Client{
       rcvdp = new DatagramPacket(buf, buf.length);
 
       try{
-		    
+    	 
 			//receive the DP from the socket:
 			RTPsocket.receive(rcvdp);
 		 
 			//create an RTPpacket object from the DP
 			RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 			
-			
-			//print important header fields of the RTP packet received: 
-			System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-		
-			//print header bitstream:
-			rtp_packet.printheader();
-		
-			//#####FEC Berrechnung
-			if (rtp_packet.PayloadType == 127) {
+			if (rtp_packet.PayloadType != 127) {
 				
-			}else {
-				
-			}
+				//print important header fields of the RTP packet received: 
+				System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
 			
-    		//get the payload bitstream from the RTPpacket object
-			int payload_length = rtp_packet.getpayload_length();
-			byte [] payload = new byte[payload_length];
-			rtp_packet.getpayload(payload);
-			
-			//write received image(payload) into mediastack
-			FECpacket.rcvdata(rtp_packet.getsequencenumber(), payload);
+				//print header bitstream:
+				rtp_packet.printheader();
 			
 
-    		//store last packetNr
-    		last = rtp_packet.getsequencenumber();
+	    		//get the payload bitstream from the RTPpacket object
+				int payload_length = rtp_packet.getpayload_length();
+				byte [] payload = new byte[payload_length];
+				rtp_packet.getpayload(payload);
+				
+				//write received image(payload) into mediastack
+				FECpacket.rcvdata(rtp_packet.getsequencenumber()-1, payload);
+				
+				//Lost Packets counter
+				//val_lost += rtp_packet.getsequencenumber()-last;
+
+	    		//store last packetNr
+	    		last = rtp_packet.getsequencenumber();
+			}else {
+				//#####FEC Berrechnung
+				System.out.println("Got FEC packet with SeqNum # "+rtp_packet.getsequencenumber()+" FrameSize "+rtp_packet.gettimestamp()+" of type "+rtp_packet.getpayloadtype());
+				FECGrp = rtp_packet.gettimestamp();
+			}
+    		
       }
       catch (InterruptedIOException iioe){
 	//System.out.println("Nothing to read");
@@ -433,28 +441,26 @@ public class Client{
 	    		
 				//get an Image object from the payload bitstream
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
-				Image image = toolkit.createImage(FECpacket.mediastack[last], 0, FECpacket.mediastack[last].length);
+				Image image = toolkit.createImage(FECpacket.mediastack[disp_count], 0, FECpacket.mediastack[disp_count].length);
 				
 				//display the image as an ImageIcon object
 				icon = new ImageIcon(image);
 				iconLabel.setIcon(icon);
 				
-				/*
-				if(rtp_list.get(disp_count).PayloadType != 127){ //Wenn kein FEC 
-					pack_count++;
-				}
-				*/
+
 	
 				
 				
-				//Lost Packets counter
-				//lost.setText("Lost: "+(rtp_packet.getsequencenumber()-pack_count)+" Frames -> " +((100*pack_count)/rtp_packet.getsequencenumber())+"%");
-				//lost.setText("Zeige Frame : "+ rtp_list.get(disp_count).getsequencenumber());
+
 				disp_count++;//next Paket
+				framenr.setText("Zeige Frame : "+ disp_count);
 	    	}
-    		catch (Exception disp_e) {
-    			System.out.println("||Handler for disp_r timer||Exception caught: "+disp_e);
+    		catch (NullPointerException disp_e) {
+    			System.out.println("||Handler for disp_timer||Exception caught: "+disp_e);
     		}
+	    	catch(ArrayIndexOutOfBoundsException exception) {
+	    	    timer_disp.stop();
+	    	}
 	    }
   }
   
