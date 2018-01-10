@@ -13,7 +13,6 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.Random;
 
 public class Server extends JFrame implements ActionListener {
 
@@ -285,9 +284,12 @@ public class Server extends JFrame implements ActionListener {
 			  if(FECGrp != 0) {
 				  //FEC Handler
 				  FECpacket.setdata(buf,image_length);
+					
 				  if(imagenb % FECGrp == 0){
+					 
 					int FEC_length = FECpacket.getdata(buf);
-				  	//build rtp packet HERE Achtung Time = Framegröße stattdessen
+					System.out.println(Arrays.toString(buf));
+				  	//build rtp packet HERE !!!Achtung!!! Time Parameter zur FECGrp übertragung missbraucht
 				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, FECGrp, buf, FEC_length);
 				  	
 				  	//Verpacke unds schicke FEC Paket

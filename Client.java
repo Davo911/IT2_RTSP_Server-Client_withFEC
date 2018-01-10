@@ -72,6 +72,7 @@ public class Client{
   int pack_count = 0;
   int disp_count = 0; //Welches Paket als nächstes abgespielt wird
   int last = 0; 		//Letzte Paketnummer
+  int lostinGrp = 0;	//verlorene Paket in der jeweiligen Gruppe
   final static String CRLF = "\r\n";
   FECpacket FECpacket;
   //Video constants:
@@ -395,32 +396,51 @@ public class Client{
 			//create an RTPpacket object from the DP
 			RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 			
-			if (rtp_packet.PayloadType != 127) {
-				
-				//print important header fields of the RTP packet received: 
-				System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-			
-				//print header bitstream:
-				rtp_packet.printheader();
-			
 
-	    		//get the payload bitstream from the RTPpacket object
-				int payload_length = rtp_packet.getpayload_length();
-				byte [] payload = new byte[payload_length];
-				rtp_packet.getpayload(payload);
+			
+			
+			//print important header fields of the RTP packet received: 
+			System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
+		
+			//print header bitstream:
+			rtp_packet.printheader();
+		
+
+    		//get the payload bitstream from the RTPpacket object
+			int payload_length = rtp_packet.getpayload_length();
+			byte [] payload = new byte[payload_length];
+			rtp_packet.getpayload(payload);
+				
+			if (rtp_packet.PayloadType == 26) {
+				
+				//Detect Lost Packet
+				if(rtp_packet.getsequencenumber() != last+1){//other packet than expected
+					if(lostinGrp != 0 || FECGrp == 0){//already lost one image OR FEC off?
+						//Fill emptys with Zeros
+						lostinGrp = last+1;
+						FECpacket.rcvdata(last+1, new byte[15000]); //fill with zero --> mediastack[last+1]=null, mit Schleife checken, ob mehrere hinterinander verloren sind , ggf diese auch füllen
+						last+=rtp_packet.getsequencenumber()-(last+1);
+						val_lost++;
+					}else{
+						//correct Picture
+					}
+				}
+				lost.setText(Integer.toString(val_lost));
 				
 				//write received image(payload) into mediastack
 				FECpacket.rcvdata(rtp_packet.getsequencenumber()-1, payload);
 				
-				//Lost Packets counter
-				//val_lost += rtp_packet.getsequencenumber()-last;
 
 	    		//store last packetNr
 	    		last = rtp_packet.getsequencenumber();
-			}else {
-				//#####FEC Berrechnung
+	    		
+			}else if(rtp_packet.PayloadType == 127) {//It's a FEC-Packet!
+				
 				System.out.println("Got FEC packet with SeqNum # "+rtp_packet.getsequencenumber()+" FrameSize "+rtp_packet.gettimestamp()+" of type "+rtp_packet.getpayloadtype());
 				FECGrp = rtp_packet.gettimestamp();
+				
+				System.out.println(Arrays.toString(payload));
+				
 			}
     		
       }
@@ -438,25 +458,26 @@ public class Client{
 	    	try{
 	    		
 				
+	    		byte[] img = FECpacket.getjpeg(disp_count);
 	    		
 				//get an Image object from the payload bitstream
 				Toolkit toolkit = Toolkit.getDefaultToolkit();
-				Image image = toolkit.createImage(FECpacket.mediastack[disp_count], 0, FECpacket.mediastack[disp_count].length);
+				Image image = toolkit.createImage(img, 0, img.length);
+				
+				
 				
 				//display the image as an ImageIcon object
 				icon = new ImageIcon(image);
 				iconLabel.setIcon(icon);
-				
+	    		
 
-	
-				
-				
 
 				disp_count++;//next Paket
 				framenr.setText("Zeige Frame : "+ disp_count);
 	    	}
     		catch (NullPointerException disp_e) {
-    			System.out.println("||Handler for disp_timer||Exception caught: "+disp_e);
+    			System.out.println("||Handler for disp_timer||NullPointerException caught: " + disp_e);
+    			
     		}
 	    	catch(ArrayIndexOutOfBoundsException exception) {
 	    	    timer_disp.stop();
