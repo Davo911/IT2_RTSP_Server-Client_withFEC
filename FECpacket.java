@@ -9,7 +9,7 @@ public class FECpacket
     int max = 15000;	 //max bytes
     int max_frames = 500;//max Bilder
     byte[] buf;
-    int FECNr,corrected;
+    int corrected;
     
     
     
@@ -82,10 +82,17 @@ public class FECpacket
     public byte[] getjpeg( int nr){
 
 		if (mediastack[nr] == null){
-
-			for (int i = 0; i < fecstack[]; i++) {
-
+			int grp = nr + (FEC_group - (nr % FEC_group));
+			//iterate through Group
+			for (int i = 0; i < FEC_group; i++) {
+				//dont use lost packet itself
+				if (i != nr) {
+					for (int j = 0; j < fecstack[grp].length; j++) {
+						//XOR DAT SHIT
+					}
+				}
 			}
+
 
 		}else return mediastack[nr];
     	
