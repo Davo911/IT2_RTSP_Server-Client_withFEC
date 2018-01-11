@@ -133,12 +133,12 @@ public class Client{
     //init timer
     //--------------------------
 
-      timer_calc = new Timer(10, new timerListener());
+      timer_calc = new Timer(20, new timerListener());
       timer_calc.setInitialDelay(0);
       timer_calc.setCoalesce(true);
 
-      timer_disp = new Timer(25, new timerListenerDisp());
-      timer_disp.setInitialDelay(0);
+      timer_disp = new Timer(40, new timerListenerDisp());
+      timer_disp.setInitialDelay(500);
       timer_disp.setCoalesce(true);
     
 
@@ -426,7 +426,7 @@ public class Client{
 				if(rtp_packet.getsequencenumber() != last+1){//other packet than expected
  					if(((rtp_packet.getsequencenumber()-(last+1)) <= 1 && lostinGrp == 0) || FECGrp > 0){//only one frame missing
                         lostinGrp = last+1;//keep lost imagenr
-                        FECpacket.rcvdata(last+1, new byte[15000]);//VORERST auch mit 0 Füllen
+
                         val_lost++;
                         last++;
 
@@ -435,7 +435,7 @@ public class Client{
 					}else{//more than one image OR FEC off?
                     //Fill emptys with Zeros
                     while (last+1 != rtp_packet.getsequencenumber()){
-                        FECpacket.rcvdata(last+1, new byte[15000]);//fill with zero --> mediastack[last+1]=null, mit Schleife checken, ob mehrere hinterinander verloren sind , ggf diese auch füllen
+
                         last++;
                         val_lost++;
 					}
@@ -453,9 +453,10 @@ public class Client{
 			}else if(rtp_packet.PayloadType == 127) {//It's a FEC-Packet!
 				
 				System.out.println("Got FEC packet with SeqNum # "+rtp_packet.getsequencenumber()+" FrameSize "+rtp_packet.gettimestamp()+" of type "+rtp_packet.getpayloadtype());
+				//keep grp size
 				FECGrp = rtp_packet.gettimestamp();
-				
-				System.out.println(Arrays.toString(payload));
+				//save fec in stack
+                FECpacket.rcvfec(rtp_packet.getsequencenumber(),rtp_packet.payload);
 				
 			}
     		
@@ -475,17 +476,16 @@ public class Client{
 	    		
 				
 	    		byte[] img = FECpacket.getjpeg(disp_count);
-	    		
-				//get an Image object from the payload bitstream
-				Toolkit toolkit = Toolkit.getDefaultToolkit();
-				Image image = toolkit.createImage(img, 0, img.length);
-				
-				
-				
-				//display the image as an ImageIcon object
-				icon = new ImageIcon(image);
-				iconLabel.setIcon(icon);
-	    		
+
+	    		if (img != null) {
+                    //get an Image object from the payload bitstream
+                    Toolkit toolkit = Toolkit.getDefaultToolkit();
+                    Image image = toolkit.createImage(img, 0, img.length);
+
+                    //display the image as an ImageIcon object
+                    icon = new ImageIcon(image);
+                    iconLabel.setIcon(icon);
+                }
 
 
 				disp_count++;//next Paket

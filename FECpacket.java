@@ -80,11 +80,7 @@ public class FECpacket
     
     // übergibt vorhandenes/korrigiertes Paket oder Fehler (null)    
     public byte[] getjpeg( int nr){
-    	
-    	
-    	
-    	
-    	
+
     	return mediastack[nr];
     	
     	/*
