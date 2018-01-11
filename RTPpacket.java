@@ -15,6 +15,7 @@ public class RTPpacket{
   public int SequenceNumber;
   public int TimeStamp;
   public int Ssrc;
+  public int FECGrp;
   
   //Bitstream of the RTP header
   public byte[] header;
@@ -42,7 +43,7 @@ public class RTPpacket{
     SequenceNumber = Framenb;
     TimeStamp = Time;
     PayloadType = PType;
-    
+
     //build the header bistream:
     //--------------------------
     header = new byte[HEADER_SIZE];

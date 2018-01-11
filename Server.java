@@ -290,7 +290,7 @@ public class Server extends JFrame implements ActionListener {
 					int FEC_length = FECpacket.getdata(buf);
 					System.out.println(Arrays.toString(buf));
 				  	//build rtp packet HERE !!!Achtung!!! Time Parameter zur FECGrp übertragung missbraucht
-				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, FECGrp, buf, FEC_length);
+				  	RTPpacket rtp_packet_fec = new RTPpacket(FEC_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, FEC_length);
 				  	
 				  	//Verpacke unds schicke FEC Paket
 				  	int fecpack_length = rtp_packet_fec.getlength();

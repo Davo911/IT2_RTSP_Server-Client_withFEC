@@ -4,12 +4,16 @@
    usage: java Client [Server hostname] [Server RTSP listening port] [Video file requested]
    ---------------------- */
 
+import sun.awt.image.ToolkitImage;
+
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.Timer;
 
@@ -73,6 +77,7 @@ public class Client{
   int disp_count = 0; //Welches Paket als nächstes abgespielt wird
   int last = 0; 		//Letzte Paketnummer
   int lostinGrp = 0;	//verlorene Paket in der jeweiligen Gruppe
+  boolean correctable = false;
   final static String CRLF = "\r\n";
   FECpacket FECpacket;
   //Video constants:
@@ -150,7 +155,7 @@ public class Client{
     
     
     
-    FECpacket = new FECpacket();
+    FECpacket = new FECpacket(3);
 
   }
 
@@ -404,44 +409,57 @@ public class Client{
 
 			
 			
-			//print important header fields of the RTP packet received: 
-			System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
-		
+
 			//print header bitstream:
-			rtp_packet.printheader();
+			//rtp_packet.printheader();
 		
 
     		//get the payload bitstream from the RTPpacket object
 			int payload_length = rtp_packet.getpayload_length();
 			byte [] payload = new byte[payload_length];
 			rtp_packet.getpayload(payload);
-				
+
+
+
 			if (rtp_packet.PayloadType == 26) {
-			    if(FECGrp != 0){
-				    if (rtp_packet.getsequencenumber() % FECGrp == 0){//entering new Group
-                        lostinGrp = 0; //Reset lost packetnr
-                    }
-			    }
-				//Detect Lost Packet
-				if(rtp_packet.getsequencenumber() != last+1){//other packet than expected
- 					if(((rtp_packet.getsequencenumber()-(last+1)) <= 1 && lostinGrp == 0) || FECGrp > 0){//only one frame missing
-                        lostinGrp = last+1;//keep lost imagenr
+                //print important header fields of the RTP packet received:
+                System.out.println("Got RTP packet with SeqNum # "+rtp_packet.getsequencenumber()+" TimeStamp "+rtp_packet.gettimestamp()+" ms, of type "+rtp_packet.getpayloadtype());
 
-                        val_lost++;
-                        last++;
+                val_lost += rtp_packet.getsequencenumber()-(last+1);
 
-                        //correct Picture
+                lost.setText("Lost: "+val_lost);
+
+			    if(FECGrp != 0) {
+                    //Detect Lost Packet
+                    if (rtp_packet.getsequencenumber() != (last + 1)) {//other packet than expected
+                        if (((rtp_packet.getsequencenumber() - (last + 1)) <= 1)) {//only one frame missing
+                            if (lostinGrp == 0) {
+                                //keep lost imagenr
+                                lostinGrp = (last+1);
+                                correctable = true;
+                                System.out.println(">>>>>>>>>>>>>EVTL KORRIGIERBAR AN DER STELLE : " + lostinGrp + "<<<<<<<<<<<<<");
+                            } else {
+                                correctable = false;
+                                System.out.println(">>>>>>>>>>>>>UNKORRIGIERBAR,mehr als eins in der Gruppe<<<<<<<<<<<<<");
+                            }
+                            //correct Picture
+
+
+                        } else if(((rtp_packet.getsequencenumber() - (last + 1)) > 1) &&
+                                (rtp_packet.getsequencenumber() % FECGrp) > (last % FECGrp)){//more than one image
+                            //jump to new position
+                            System.out.println(">>>>>>>>>>>>UNKORRIGIERBAR,mehrere nacheinander<<<<<<<<<<<<");
+
+
+                            /*
+                            while (last+1 != rtp_packet.getsequencenumber()){
+                                last++;
+
+                            }
+                            */
                         }
-					}else{//more than one image OR FEC off?
-                    //Fill emptys with Zeros
-                    while (last+1 != rtp_packet.getsequencenumber()){
-
-                        last++;
-                        val_lost++;
-					}
-
-				}
-				lost.setText(Integer.toString(val_lost));
+                    }
+                }
 				
 				//write received image(payload) into mediastack
 				FECpacket.rcvdata(rtp_packet.getsequencenumber()-1, payload);
@@ -451,13 +469,21 @@ public class Client{
 	    		last = rtp_packet.getsequencenumber();
 	    		
 			}else if(rtp_packet.PayloadType == 127) {//It's a FEC-Packet!
-				
-				System.out.println("Got FEC packet with SeqNum # "+rtp_packet.getsequencenumber()+" FrameSize "+rtp_packet.gettimestamp()+" of type "+rtp_packet.getpayloadtype());
+                lostinGrp = 0; //Reset lost packetnr
+				System.out.println("FEC packet with Seq/GrpNr # "+rtp_packet.getsequencenumber());
+				System.out.println("------------------------------------------------------------------------------------------------------------------");
 				//keep grp size
-				FECGrp = rtp_packet.gettimestamp();
+				FECGrp = 3;
+				//is there a correctable image?
+                if(correctable == true){
+                    //get that image
+                    FECpacket.getjpeg(lostinGrp);
+
+                }
+
 				//save fec in stack
                 FECpacket.rcvfec(rtp_packet.getsequencenumber(),rtp_packet.payload);
-				
+				correctable = false;
 			}
     		
       }
@@ -473,11 +499,10 @@ public class Client{
   class timerListenerDisp implements ActionListener {
 	    public void actionPerformed(ActionEvent e) {
 	    	try{
-	    		
-				
 	    		byte[] img = FECpacket.getjpeg(disp_count);
 
 	    		if (img != null) {
+
                     //get an Image object from the payload bitstream
                     Toolkit toolkit = Toolkit.getDefaultToolkit();
                     Image image = toolkit.createImage(img, 0, img.length);

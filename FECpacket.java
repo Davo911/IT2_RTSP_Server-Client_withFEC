@@ -81,7 +81,13 @@ public class FECpacket
     // übergibt vorhandenes/korrigiertes Paket oder Fehler (null)    
     public byte[] getjpeg( int nr){
 
-    	return mediastack[nr];
+		if (mediastack[nr] == null){
+
+			for (int i = 0; i < fecstack[]; i++) {
+
+			}
+
+		}else return mediastack[nr];
     	
     	/*
     	if(//mehr als 1 Paket in der Grp fehlt ) {
