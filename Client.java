@@ -132,13 +132,16 @@ public class Client{
 
     //init timer
     //--------------------------
-    timer_disp = new Timer(20, new timerListener());
-    timer_disp.setInitialDelay(0);
-    timer_disp.setCoalesce(true);
+
+      timer_calc = new Timer(10, new timerListener());
+      timer_calc.setInitialDelay(0);
+      timer_calc.setCoalesce(true);
+
+      timer_disp = new Timer(25, new timerListenerDisp());
+      timer_disp.setInitialDelay(0);
+      timer_disp.setCoalesce(true);
     
-    timer_calc = new Timer(40, new timerListenerDisp());
-    timer_calc.setInitialDelay(0);
-    timer_calc.setCoalesce(true);
+
     
    
     
@@ -293,8 +296,9 @@ public class Client{
 	      System.out.println("New RTSP state: READY\n");
 	      
 	      //stop the timer
-	      timer_disp.stop();
-	      timer_calc.stop();
+            timer_calc.stop();
+	        timer_disp.stop();
+
 	    }
 	}
       //else if state != PLAYING then do nothing
@@ -325,8 +329,9 @@ public class Client{
 	  System.out.println("New RTSP state: INIT");
 
 	  //stop the timer
+      timer_calc.stop();
 	  timer_disp.stop();
-	  timer_calc.stop();
+
 	  //exit
 	  System.exit(0);
 	}
@@ -412,18 +417,29 @@ public class Client{
 			rtp_packet.getpayload(payload);
 				
 			if (rtp_packet.PayloadType == 26) {
-				
+			    if(FECGrp != 0){
+				    if (rtp_packet.getsequencenumber() % FECGrp == 0){//entering new Group
+                        lostinGrp = 0; //Reset lost packetnr
+                    }
+			    }
 				//Detect Lost Packet
 				if(rtp_packet.getsequencenumber() != last+1){//other packet than expected
-					if(lostinGrp != 0 || FECGrp == 0){//already lost one image OR FEC off?
-						//Fill emptys with Zeros
-						lostinGrp = last+1;
-						FECpacket.rcvdata(last+1, new byte[15000]); //fill with zero --> mediastack[last+1]=null, mit Schleife checken, ob mehrere hinterinander verloren sind , ggf diese auch füllen
-						last+=rtp_packet.getsequencenumber()-(last+1);
-						val_lost++;
-					}else{
-						//correct Picture
+ 					if(((rtp_packet.getsequencenumber()-(last+1)) <= 1 && lostinGrp == 0) || FECGrp > 0){//only one frame missing
+                        lostinGrp = last+1;//keep lost imagenr
+                        FECpacket.rcvdata(last+1, new byte[15000]);//VORERST auch mit 0 Füllen
+                        val_lost++;
+                        last++;
+
+                        //correct Picture
+                        }
+					}else{//more than one image OR FEC off?
+                    //Fill emptys with Zeros
+                    while (last+1 != rtp_packet.getsequencenumber()){
+                        FECpacket.rcvdata(last+1, new byte[15000]);//fill with zero --> mediastack[last+1]=null, mit Schleife checken, ob mehrere hinterinander verloren sind , ggf diese auch füllen
+                        last++;
+                        val_lost++;
 					}
+
 				}
 				lost.setText(Integer.toString(val_lost));
 				
