@@ -9,7 +9,7 @@ public class FECpacket
     int max = 15000;	 //max bytes
     int max_frames = 500;//max Bilder
     byte[] buf;
-    int corrected;
+    int corrected = 0;
     
     
     
@@ -93,6 +93,7 @@ public class FECpacket
 				}
 			}
 			System.out.println(Arrays.toString(fecstack[grp]));
+			corrected++;
 			return fecstack[grp];
 		}else return mediastack[nr];
     }
