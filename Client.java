@@ -4,7 +4,7 @@
    usage: java Client [Server hostname] [Server RTSP listening port] [Video file requested]
    ---------------------- */
 
-import sun.awt.image.ToolkitImage;
+
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -477,8 +477,7 @@ public class Client{
 				//is there a correctable image?
                 if(correctable == true){
                     //get that image
-                    FECpacket.getjpeg(lostinGrp);
-
+                    FECpacket.rcvdata(lostinGrp,FECpacket.getjpeg(lostinGrp));
                 }
 
 				//save fec in stack

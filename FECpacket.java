@@ -87,27 +87,14 @@ public class FECpacket
 			for (int i = 0; i < FEC_group; i++) {
 				//dont use lost packet itself
 				if (i != nr) {
-					for (int j = 0; j < fecstack[grp].length; j++) {
-						//XOR DAT SHIT
+					for (int j = 1; j < fecstack[grp].length; j++) {
+						fecstack[grp][j] ^= (byte)mediastack[grp-(FEC_group-i)][j];
 					}
 				}
 			}
-
-
+			System.out.println(Arrays.toString(fecstack[grp]));
+			return fecstack[grp];
 		}else return mediastack[nr];
-    	
-    	/*
-    	if(//mehr als 1 Paket in der Grp fehlt ) {
-    		return null;
-    	}else if(eins fehlt){
-    		for(int i=0;i<Bildlänge;i++) {
-    			//XOR aller in der grp befindlichen bilder, mit fec 
-    		}
-    		corrected++;
-    		return //ergebnis
-    	}
-    	*/
-    	
     }
     
     
