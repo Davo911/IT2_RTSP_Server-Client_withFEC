@@ -453,7 +453,7 @@ public class Client {
                             }
                         }
                         FECpacket.rcvdata(corr_imgnr, FECpacket.getjpeg(corr_imgnr));
-                        System.out.println("KORRIGIERT: >>>>>" + corr_imgnr + "<<<<<");
+                        System.out.println("CORRECTED @: >>>>>" + corr_imgnr + "<<<<<");
                     }else if (lost >1){//too much missing
                         System.out.println("_____Too much missing in this Group_____");
                         //write remaining in stack
@@ -466,7 +466,7 @@ public class Client {
                             }
                         }
                     }else {//nothing missing write in stack
-                        System.out.println("#####Complet Group#####");
+                        System.out.println("#####Complete Group#####");
                         for (int i = 1; i <= 3; i++) {
                             int payload_length = currgrp[i].getpayload_length();
                             byte[] payload = new byte[payload_length];
@@ -486,7 +486,7 @@ public class Client {
                 }
                 */
                 System.out.println(
-                        "--------------------------------------------------GRP"+rtp_packet.getsequencenumber()+"----------------------------------------------------------------");
+                        "--------------------------------------------------GRP#"+rtp_packet.getsequencenumber()+"#----------------------------------------------------------------");
                 // RESET
                 correctable = false;
                 lostinGrp = 0;
