@@ -95,13 +95,13 @@ public class FECpacket {
 		
 		byte[] temp = fecstack[grp];
 		// image empty?
-		if (mediastack[nr] == null) {
+		if (mediastack[nr-1] == null) {
 			// iterate through Group
 			for (int i = 1; i <= FEC_group; i++) {
 				// dont use lost packet itself
 				if (i != (nr % FEC_group) && i<= (FEC_group-1)) {
 					for (int j = 0; j < fecstack[grp].length; j++) {
-						temp[j] ^= (byte) mediastack[grp - (FEC_group - i)][j];
+						temp[j] ^= (byte) mediastack[(grp - (FEC_group - i))-1][j];
 					}
 				}
 			}
@@ -109,7 +109,7 @@ public class FECpacket {
 			return temp;
 
 		} else
-			return mediastack[nr];
+			return mediastack[nr-1];
 	}
 
 	// für Statistik, Anzahl der korrigierten Pakete
