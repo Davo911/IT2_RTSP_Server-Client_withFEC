@@ -102,7 +102,7 @@ public class Server extends JFrame implements ActionListener {
 		// GUI:
 
 
-		errWarsch = new JSlider(JSlider.HORIZONTAL, 0, 100, 80);
+		errWarsch = new JSlider(JSlider.HORIZONTAL, 0, 100, 90);
 		errWarsch.setPaintLabels(true);
 		errWarsch.setPaintTicks(true);
 		errWarsch.setMajorTickSpacing(10);

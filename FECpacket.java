@@ -87,7 +87,7 @@ public class FECpacket {
 	// übergibt vorhandenes/korrigiertes Paket oder Fehler (null)
 	public byte[] getjpeg(int nr) {
 		
-		int grp;
+		int grp; //corresponding FEC pack
 		if(nr % FEC_group == 0) {
 			grp = nr;
 		}else grp = nr + ((FEC_group) - (nr % (FEC_group)));
