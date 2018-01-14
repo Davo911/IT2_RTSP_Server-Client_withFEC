@@ -441,9 +441,8 @@ public class Client {
                     }
 
                     if (lost == 1) {//just one missing, correct it
-                        //HIER IST DER FEHLER##############################
                         int corr_imgnr = (rtp_packet.getsequencenumber()-FECGrp)+lostinGrp;
-                        //######################
+
                         for (int i = 1; i <= 3; i++) {
                             if(i != lostinGrp) {
                                 int payload_length = currgrp[i].getpayload_length();
@@ -454,6 +453,7 @@ public class Client {
                         }
                         FECpacket.rcvdata(corr_imgnr, FECpacket.getjpeg(corr_imgnr));
                         System.out.println("CORRECTED @: >>>>>" + corr_imgnr + "<<<<<");
+                        korr.setText("Korrigierbar: "+FECpacket.getNrCorrected());
                     }else if (lost >1){//too much missing
                         System.out.println("_____Too much missing in this Group_____");
                         //write remaining in stack
@@ -511,7 +511,7 @@ public class Client {
 class timerListenerDisp implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         try {
-            byte[] img = FECpacket.getjpeg(disp_count);
+            byte[] img = FECpacket.mediastack[disp_count-1];
             if (img != null) {
 
                 // get an Image object from the payload bitstream
