@@ -498,6 +498,9 @@ public class Client {
 
             {
                 System.out.println("||Handler for calc_timer||Exception caught: " + ioe);
+            } catch (ArrayIndexOutOfBoundsException aiobe)
+            {
+                System.out.println("||Handler for calc_timer||Exception caught: " + aiobe);
             }
         }
     }
