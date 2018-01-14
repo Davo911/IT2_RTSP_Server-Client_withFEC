@@ -4,16 +4,16 @@
    usage: java Client [Server hostname] [Server RTSP listening port] [Video file requested]
    ---------------------- */
 
-import java.awt.image.BufferedImage;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.*;
-import java.util.*;
-import java.util.List;
-import java.awt.*;
-import java.awt.event.*;
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.Timer;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 
 
 public class Client {
@@ -68,15 +68,27 @@ public class Client {
     int RTSPid = 0; // ID of the RTSP session (given by the RTSP Server)
     int desc = 0, opt = 0, q = 1;
     String descoptString = new String();
-    int FECGrp = 3;
+    int FECGrp = 0;
     int val_lost = 0;
     int disp_count = 1; // Welches Paket als nächstes abgespielt wird
     int last = 0; // Letzte Paketnummer
     int lostinGrp = 0; // verlorene Paket in der jeweiligen Gruppe
-    boolean correctable = false;
+    boolean first = false;
     final static String CRLF = "\r\n";
     FECpacket FECpacket;
-    RTPpacket[] currgrp = new RTPpacket[4];
+    RTPpacket[] currgrp;
+
+    int[] timetogrp = {
+            16777216,
+            33554432,
+            50331648,
+            67108864,
+            83886080,
+            100663296,
+            117440512,
+            134217728,
+            150994944,
+            167772160};
     // Video constants:
     // ------------------
     static int MJPEG_TYPE = 26;
@@ -147,7 +159,7 @@ public class Client {
         // allocate enough memory for the buffer used to receive data from the server
         buf = new byte[15000];
 
-        FECpacket = new FECpacket(3);
+        FECpacket = new FECpacket();
 
     }
 
@@ -381,32 +393,50 @@ public class Client {
                 RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
 
 
-
-
-
-                if (rtp_packet.PayloadType == MJPEG_TYPE) {
+                if (rtp_packet.PayloadType == MJPEG_TYPE) {                                                 //IMG
 
 
                     val_lost += rtp_packet.getsequencenumber() - (last + 1);
                     lost.setText("Lost: " + val_lost);
-                    if(rtp_packet.getsequencenumber() % FECGrp == 0){
-                        currgrp[FECGrp] = rtp_packet;
-                    }else {
-                        currgrp[rtp_packet.getsequencenumber() % FECGrp] = rtp_packet;
+
+                    if (FECGrp == 0 || FECGrp == 1) { //no FEC until first FEC packet arrived or off
+                        int payload_length = rtp_packet.getpayload_length();
+                        byte[] payload = new byte[payload_length];
+                        rtp_packet.getpayload(payload);
+                        FECpacket.rcvdata(rtp_packet.getsequencenumber() - 1, payload);
+                        System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber());
+                    } else {
+                        if (rtp_packet.getsequencenumber() % FECGrp == 0) {
+                            currgrp[FECGrp] = rtp_packet;
+                        } else {
+                            currgrp[rtp_packet.getsequencenumber() % FECGrp] = rtp_packet;
+                        }
+                        System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber());
                     }
-                    System.out.println("Got RTP packet with SeqNum # " + rtp_packet.getsequencenumber());
+
 
                     // store last packetNr
                     last = rtp_packet.getsequencenumber();
 
-                }else if (rtp_packet.PayloadType == FEC_TYPE) {// It's a FEC-Packet!
+                } else if (rtp_packet.PayloadType == FEC_TYPE) {                                             // It's a FEC-Packet!
+                    for (int i = 1; i < timetogrp.length; i++) {
+                        if (rtp_packet.gettimestamp() == timetogrp[i]) {
+                            FECGrp = i + 1;
+                        }
+                    }
+
+                    FECpacket.setFECgroup(FECGrp);
+                    if (first == false) {
+                        currgrp = new RTPpacket[FECGrp + 1];
+                        first = true;
+                    }
 
                     FECpacket.rcvfec(rtp_packet.getsequencenumber(), rtp_packet.payload);
                     System.out.println("FEC packet with Seq/GrpNr # " + rtp_packet.getsequencenumber());
 
                     //count lost in group
                     int lost = 0;
-                    for (int i = 1; i <= 3; i++) {
+                    for (int i = 1; i <= FECGrp; i++) {
                         if (currgrp[i] == null) {
                             lost++;
                             lostinGrp = i;
@@ -414,33 +444,35 @@ public class Client {
                     }
                     //cases of lost packets -> get the payload bitstream from the RTPpacket object
                     if (lost == 1) {    //just one missing, correct it
-                        int corr_imgnr = (rtp_packet.getsequencenumber()-FECGrp)+lostinGrp;
+                        int corr_imgnr = (rtp_packet.getsequencenumber() - FECGrp) + lostinGrp;
 
-                        for (int i = 1; i <= 3; i++) {
-                            if(i != lostinGrp) {
+                        for (int i = 1; i <= FECGrp; i++) {
+                            if (i != lostinGrp) {
                                 int payload_length = currgrp[i].getpayload_length();
                                 byte[] payload = new byte[payload_length];
                                 currgrp[i].getpayload(payload);
                                 FECpacket.rcvdata(currgrp[i].getsequencenumber() - 1, payload);
                             }
                         }
-                        FECpacket.rcvdata(corr_imgnr, FECpacket.getjpeg(corr_imgnr));
+                        System.out.println("BILD: " + Arrays.toString(FECpacket.getjpeg(corr_imgnr)));
+                        //FECpacket.rcvdata(corr_imgnr, FECpacket.getjpeg(corr_imgnr));
                         System.out.println("CORRECTED @: >>>>>" + corr_imgnr + "<<<<<");
-                        korr.setText("Korrigiert: "+FECpacket.getNrCorrected());
-                    }else if (lost >1){ //too much missing
+                        korr.setText("Korrigiert: " + FECpacket.getNrCorrected());
+
+                    } else if (lost > 1) { //too much missing
                         System.out.println("_____Too much missing in this Group_____");
                         //write remaining in stack
-                        for (int i = 1; i <= 3; i++) {
-                            if(currgrp[i] != null){
+                        for (int i = 1; i <= FECGrp; i++) {
+                            if (currgrp[i] != null) {
                                 int payload_length = currgrp[i].getpayload_length();
                                 byte[] payload = new byte[payload_length];
                                 currgrp[i].getpayload(payload);
                                 FECpacket.rcvdata(currgrp[i].getsequencenumber() - 1, payload);
                             }
                         }
-                    }else {             //nothing missing write in stack
+                    } else {             //nothing missing write in stack
                         System.out.println("#####Complete Group#####");
-                        for (int i = 1; i <= 3; i++) {
+                        for (int i = 1; i <= FECGrp; i++) {
                             int payload_length = currgrp[i].getpayload_length();
                             byte[] payload = new byte[payload_length];
                             currgrp[i].getpayload(payload);
@@ -448,58 +480,54 @@ public class Client {
                         }
                     }
 
-                System.out.println(
-                        "--------------------------------------------------GRP#"+rtp_packet.getsequencenumber()+"#----------------------------------------------------------------");
-                // RESET
-                correctable = false;
-                lostinGrp = 0;
-                currgrp = new RTPpacket[4];
-                q = 1;
-            }
-
-        } catch(
-        InterruptedIOException iioe)
-
-        {
-            // System.out.println("Nothing to read");
-        } catch(
-        IOException ioe)
-
-        {
-            System.out.println("||Handler for calc_timer||Exception caught: " + ioe);
-        }
-    }
-}
-
-class timerListenerDisp implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-        try {
-            byte[] img = FECpacket.mediastack[disp_count-1];
-            if (img != null && img[0] != 0) {
-                for (int i = 0; i < 40; i++) {
-                    System.out.print(img[i]);
+                    System.out.println(
+                            "--------------------------------------------------GRP#" + rtp_packet.getsequencenumber() + "#----------------------------------------------------------------");
+                    // RESET
+                    lostinGrp = 0;
+                    currgrp = new RTPpacket[FECGrp + 1];
+                    q = 1;
                 }
-                System.out.print("\n\n");
-                // get an Image object from the payload bitstream
-                Toolkit toolkit = Toolkit.getDefaultToolkit();
-                Image image = toolkit.createImage(img, 0, img.length);
 
-                // display the image as an ImageIcon object
-                icon = new ImageIcon(image);
-                iconLabel.setIcon(icon);
+            } catch (
+                    InterruptedIOException iioe)
+
+            {
+                // System.out.println("Nothing to read");
+            } catch (
+                    IOException ioe)
+
+            {
+                System.out.println("||Handler for calc_timer||Exception caught: " + ioe);
             }
-
-            disp_count++;// next Paket
-            framenr.setText("Zeige Frame : " + disp_count);
-        } catch (NullPointerException disp_e) {
-            System.out.println("||Handler for disp_timer||NullPointerException caught: " + disp_e);
-
-        } catch (ArrayIndexOutOfBoundsException exception) {
-            timer_disp.stop();
         }
     }
 
-}
+    class timerListenerDisp implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            try {
+                byte[] img = FECpacket.mediastack[disp_count - 1];
+                if (img != null && img[0] != 0) {
+
+                    // get an Image object from the payload bitstream
+                    Toolkit toolkit = Toolkit.getDefaultToolkit();
+                    Image image = toolkit.createImage(img, 0, img.length);
+
+                    // display the image as an ImageIcon object
+                    icon = new ImageIcon(image);
+                    iconLabel.setIcon(icon);
+                }
+
+                disp_count++;// next Paket
+                framenr.setText("Zeige Frame : " + disp_count);
+            } catch (NullPointerException disp_e) {
+                System.out.println("||Handler for disp_timer||NullPointerException caught: " + disp_e);
+
+            } catch (ArrayIndexOutOfBoundsException exception) {
+                timer_disp.stop();
+            }
+        }
+
+    }
 
     // ------------------------------------
     // Parse Server Response
