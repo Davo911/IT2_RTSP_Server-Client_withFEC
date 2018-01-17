@@ -454,7 +454,6 @@ public class Client {
                                 FECpacket.rcvdata(currgrp[i].getsequencenumber() - 1, payload);
                             }
                         }
-                        System.out.println("BILD: " + Arrays.toString(FECpacket.getjpeg(corr_imgnr)));
                         //FECpacket.rcvdata(corr_imgnr, FECpacket.getjpeg(corr_imgnr));
                         System.out.println("CORRECTED @: >>>>>" + corr_imgnr + "<<<<<");
                         korr.setText("Korrigiert: " + FECpacket.getNrCorrected());
